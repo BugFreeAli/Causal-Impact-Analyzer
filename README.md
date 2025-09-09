@@ -6,7 +6,8 @@ This tool is designed for data scientists, analysts, and researchers who want to
 
 Features
 
-📁 Easy Data Upload
+📁 Easy Data Upload<img width="1365" height="576" alt="analysis" src="https://github.com/user-attachments/assets/b54517a2-8b09-4bdd-b8ad-3bb96f0f2fd9" />
+
 
  Upload CSV files with date and metric columns.
 
@@ -37,7 +38,9 @@ Features
 Key metrics: significance, p-values, effect sizes
 
 📈 Interactive Visualization
+
 Plotly-based plots:
+
  Actual vs Predicted with confidence intervals
  
  Pointwise causal effect over time
@@ -46,13 +49,29 @@ Plotly-based plots:
 
  📷 Screenshots
 
-![Data Overview](assets/overview.png)
-
 Causal Impact Analysis
 
-![Data Overview](assets/impact.png)
+<img width="1365" height="576" alt="analysis" src="https://github.com/user-attachments/assets/a211fcf0-5e18-451e-b188-e340e41f98bb" />
+
+
+Main Dashboard
+
+<img width="1365" height="595" alt="dashboard" src="https://github.com/user-attachments/assets/5ba2441a-1381-484d-b04f-0c6ae8bfc212" />
+
+Analysis Report
+
+<img width="1365" height="574" alt="report" src="https://github.com/user-attachments/assets/6466b395-d30e-4bf2-8389-115327d5576c" />
+
+Result
+<img width="1365" height="601" alt="result" src="https://github.com/user-attachments/assets/cfa33fca-5dfb-4800-b48f-11d6c8ee7f72" />
+
+Report Visualization
+
+<img width="1030" height="585" alt="visualization" src="https://github.com/user-attachments/assets/297ec2fd-c1c4-41a2-8792-b4abb3dc3d86" />
+
 
 📤 Export Results
+
  Download summary report as text
  
  Export interactive plots as PNG (via kaleido)
