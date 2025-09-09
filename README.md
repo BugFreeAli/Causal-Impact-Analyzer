@@ -6,8 +6,7 @@ This tool is designed for data scientists, analysts, and researchers who want to
 
 Features
 
-📁 Easy Data Upload<img width="1365" height="576" alt="analysis" src="https://github.com/user-attachments/assets/b54517a2-8b09-4bdd-b8ad-3bb96f0f2fd9" />
-
+📁 Easy Data Upload
 
  Upload CSV files with date and metric columns.
 
