@@ -4,13 +4,13 @@ An interactive Streamlit application for estimating and visualizing the causal e
 
 This tool is designed for data scientists, analysts, and researchers who want to measure the true impact of events (e.g., product launches, marketing campaigns, policy changes) on KPIs in a professional and intuitive way.
 
-Features
+**Features**
 
-📁 Easy Data Upload
+📁 **Easy Data Upload**
 
  Upload CSV files with date and metric columns.
 
-⚙️ Smart Preprocessing
+⚙️ **Smart Preprocessing**
 
  Handles duplicate dates automatically
  
@@ -18,7 +18,7 @@ Features
  
  Generates a clean, complete time series
 
-📊 Data Exploration
+📊 **Data Exploration**
 
  Interactive preview of uploaded data
  
@@ -26,7 +26,7 @@ Features
  
  Trend visualization with event markers
 
-🔍 Causal Impact Analysis
+🔍 **Causal Impact Analysis**
 
  Bayesian structural time series (BSTS) model via causalimpact
  
@@ -36,7 +36,7 @@ Features
 
 Key metrics: significance, p-values, effect sizes
 
-📈 Interactive Visualization
+📈 **Interactive Visualization**
 
 Plotly-based plots:
 
@@ -48,28 +48,27 @@ Plotly-based plots:
 
  📷 Screenshots
 
-Causal Impact Analysis
-
-<img width="1365" height="576" alt="analysis" src="https://github.com/user-attachments/assets/a211fcf0-5e18-451e-b188-e340e41f98bb" />
-
-
-Main Dashboard
+**Main Dashboard**
 
 <img width="1365" height="595" alt="dashboard" src="https://github.com/user-attachments/assets/5ba2441a-1381-484d-b04f-0c6ae8bfc212" />
 
-Analysis Report
+**Causal Impact Analysis**
+
+<img width="1365" height="576" alt="analysis" src="https://github.com/user-attachments/assets/a211fcf0-5e18-451e-b188-e340e41f98bb" />
+
+**Analysis Report for CSV file**
 
 <img width="1365" height="574" alt="report" src="https://github.com/user-attachments/assets/6466b395-d30e-4bf2-8389-115327d5576c" />
 
-Result
+**Result Demonstration**
 <img width="1365" height="601" alt="result" src="https://github.com/user-attachments/assets/cfa33fca-5dfb-4800-b48f-11d6c8ee7f72" />
 
-Report Visualization
+**Report Visualization**
 
 <img width="1030" height="585" alt="visualization" src="https://github.com/user-attachments/assets/297ec2fd-c1c4-41a2-8792-b4abb3dc3d86" />
 
 
-📤 Export Results
+📤 **Export Results**
 
  Download summary report as text
  
@@ -77,7 +76,7 @@ Report Visualization
  
  Export processed results & inferences as CSV
 
-🛠️ Tech Stack
+🛠️ **Tech Stack**
 Python 3.9+
 
 Streamlit → UI framework
@@ -91,7 +90,7 @@ Plotly → Interactive visualizations
 Kaleido (optional) → Export charts as PNG
 
 
-📦 Installation
+📦 **Installation**
 
 Clone the repo:
 
@@ -110,14 +109,14 @@ Install dependencies:
 
 pip install -r requirements.txt
 
-▶️ Run the App
+▶️ **Run the App**
 streamlit run app.py
 
 
 The app will launch in your browser at http://localhost:8501
 .
 
-📂 Example Data
+📂 **Example Data**
 
 Example dataset format:
 
@@ -130,7 +129,7 @@ Date → Date column (daily frequency recommended)
 
 Metric (e.g., Sales) → Numeric values to analyze
 
-🌟 Why This Project?
+🌟 **Why This Project?**
 
 This project demonstrates my ability to:
 
@@ -144,7 +143,7 @@ Integrate interactive visualizations with Plotly
 
 Provide downloadable insights (reports, charts, raw results) for stakeholders
 
-📌 Future Improvements
+📌 **Future Improvements**
 
 Multi-metric causal impact (support covariates)
 
@@ -156,7 +155,7 @@ Forecasting future impact scenarios
 
 👨‍💻 Author
 
-Ali Akbar Gondal
+**Ali Akbar Gondal**
 📌 Computer Science Student | Data Scientist | Developer
 
 ✨ If you like this project, give it a ⭐ on GitHub to support!
