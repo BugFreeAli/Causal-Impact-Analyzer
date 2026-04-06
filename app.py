@@ -30,6 +30,10 @@ if 'analysis_df' not in st.session_state:
     st.session_state.analysis_df = None
 if 'event_date' not in st.session_state:
     st.session_state.event_date = None
+if 'pre_period' not in st.session_state:
+    st.session_state.pre_period = None
+if 'post_period' not in st.session_state:
+    st.session_state.post_period = None
 
 # ----------------------------
 # Custom CSS for a Professional UI
@@ -144,7 +148,7 @@ if uploaded_file is not None:
             min_value=min_date,
             max_value=max_date
         )
-        event_date = pd.to_datetime(event_date)
+        event_date = pd.Timestamp(event_date).normalize()
         st.session_state.event_date = event_date
 
         # Set the date column as the index
@@ -158,7 +162,7 @@ if uploaded_file is not None:
             analysis_df = analysis_df.groupby(analysis_df.index).mean()
 
         # 2. Ensure the index is a proper DateTimeIndex
-        analysis_df.index = pd.DatetimeIndex(analysis_df.index)
+        analysis_df.index = pd.DatetimeIndex(analysis_df.index).normalize()
 
         # 3. Create a complete date range to identify missing days
         full_date_range = pd.date_range(
@@ -306,9 +310,24 @@ with tab2:
 
         with st.spinner('Running advanced Bayesian analysis... This may take a moment for large datasets.'):
             try:
-                # Define pre and post periods
-                pre_period = [st.session_state.analysis_df.index.min(), st.session_state.event_date - timedelta(days=1)]
-                post_period = [st.session_state.event_date, st.session_state.analysis_df.index.max()]
+                # Normalize and validate date boundaries to avoid index-type mismatches in causalimpact summary.
+                idx_min = pd.Timestamp(st.session_state.analysis_df.index.min()).normalize()
+                idx_max = pd.Timestamp(st.session_state.analysis_df.index.max()).normalize()
+                event_ts = pd.Timestamp(st.session_state.event_date).normalize()
+
+                if event_ts <= idx_min:
+                    st.error("❌ Event date must be after the first date in your dataset.")
+                    st.stop()
+                if event_ts > idx_max:
+                    st.error("❌ Event date cannot be after the last date in your dataset.")
+                    st.stop()
+
+                # Define pre and post periods as strings for consistent downstream slicing.
+                pre_end = event_ts - timedelta(days=1)
+                pre_period = [idx_min.strftime('%Y-%m-%d'), pre_end.strftime('%Y-%m-%d')]
+                post_period = [event_ts.strftime('%Y-%m-%d'), idx_max.strftime('%Y-%m-%d')]
+                st.session_state.pre_period = pre_period
+                st.session_state.post_period = post_period
 
                 # Prepare model args
                 custom_model_args = {}
@@ -350,15 +369,20 @@ with tab2:
             st.markdown("### 📋 Analysis Summary Report")
             st.markdown('<div class="result-box">', unsafe_allow_html=True)
 
-            # Get the summary as text and display it
-            summary_output = st.session_state.ci.summary(output='report')
-            st.text(summary_output)
+            # Get the summary as text and display it. If library summary fails, keep app usable.
+            summary_output = None
+            try:
+                summary_output = st.session_state.ci.summary(output='report')
+                st.text(summary_output)
+            except Exception as summary_err:
+                st.warning(f"Could not generate library report summary: {summary_err}")
+                st.info("Analysis succeeded, but the report formatter failed. Raw inferences are still available below and in export.")
 
             # Extract and display key metrics
             st.markdown("### 📊 Key Impact Metrics")
             
             # Very simple approach - just show the summary and p-value
-            summary_text = st.session_state.ci.summary(output='report')
+            summary_text = summary_output if summary_output is not None else "Summary report unavailable for this run."
             
             # Get p-value if available
             p_value = getattr(st.session_state.ci, 'p_value', 0.5)
