@@ -34,6 +34,10 @@ if 'pre_period' not in st.session_state:
     st.session_state.pre_period = None
 if 'post_period' not in st.session_state:
     st.session_state.post_period = None
+if 'summary_output' not in st.session_state:
+    st.session_state.summary_output = None
+if 'impact_data' not in st.session_state:
+    st.session_state.impact_data = None
 
 # ----------------------------
 # Custom CSS for a Professional UI
@@ -307,6 +311,8 @@ with tab2:
 
     if st.button("🚀 Run Causal Impact Analysis", type="primary", use_container_width=True):
         st.session_state.analysis_complete = False
+        st.session_state.summary_output = None
+        st.session_state.impact_data = None
 
         with st.spinner('Running advanced Bayesian analysis... This may take a moment for large datasets.'):
             try:
@@ -374,6 +380,7 @@ with tab2:
             try:
                 summary_output = st.session_state.ci.summary(output='report')
                 st.text(summary_output)
+                st.session_state.summary_output = summary_output
             except Exception as summary_err:
                 st.warning(f"Could not generate library report summary: {summary_err}")
                 st.info("Analysis succeeded, but the report formatter failed. Raw inferences are still available below and in export.")
@@ -404,132 +411,149 @@ with tab2:
 
             # --- Create Interactive Plotly Chart from results ---
             st.markdown("### 📈 Detailed Analysis Plot")
-            impact_data = st.session_state.ci.inferences.copy()
-            impact_data.index = st.session_state.analysis_df.index
-
-            # DEBUG: Let's see the actual data structure
-            st.write("Actual columns in inferences data:", impact_data.columns.tolist())
-            
-            # AUTOMATICALLY DETECT THE CORRECT COLUMN NAMES
-            actual_col = None
-            pred_col = None
-            upper_col = None
-            lower_col = None
-            
-            # Look for columns that likely contain the actual data
-            for col in impact_data.columns:
-                col_lower = str(col).lower()
-                # Look for actual data columns
-                if 'actual' in col_lower or 'response' in col_lower or 'y' in col_lower or 'observed' in col_lower:
-                    actual_col = col
-                # Look for prediction columns
-                elif 'pred' in col_lower and 'upper' not in col_lower and 'lower' not in col_lower:
-                    pred_col = col
-                # Look for confidence interval columns
-                elif 'upper' in col_lower:
-                    upper_col = col
-                elif 'lower' in col_lower:
-                    lower_col = col
-            
-            # If we couldn't find specific names, use the first columns
-            if actual_col is None and len(impact_data.columns) > 0:
-                actual_col = impact_data.columns[0]
-            if pred_col is None and len(impact_data.columns) > 1:
-                pred_col = impact_data.columns[1]
-            if upper_col is None and len(impact_data.columns) > 2:
-                upper_col = impact_data.columns[2]
-            if lower_col is None and len(impact_data.columns) > 3:
-                lower_col = impact_data.columns[3]
-
-            st.write(f"Detected columns: actual={actual_col}, predicted={pred_col}, upper={upper_col}, lower={lower_col}")
-
-            fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.05,
-                            subplot_titles=('Actual vs. Predicted', 'Pointwise Effect'))
-
-            # Plot 1: Actual vs Predicted
-            fig.add_trace(go.Scatter(
-                x=impact_data.index, 
-                y=impact_data[actual_col],
-                mode='lines', 
-                name='Actual', 
-                line=dict(color='blue')
-            ), row=1, col=1)
-
-            fig.add_trace(go.Scatter(
-                x=impact_data.index, 
-                y=impact_data[pred_col],
-                mode='lines', 
-                name='Predicted', 
-                line=dict(color='orange', dash='dash')
-            ), row=1, col=1)
-
-            # Add confidence interval if available
-            if upper_col and lower_col and upper_col in impact_data.columns and lower_col in impact_data.columns:
-                fig.add_trace(go.Scatter(
-                    x=impact_data.index, 
-                    y=impact_data[upper_col],
-                    mode='lines', 
-                    line=dict(width=0), 
-                    showlegend=False
-                ), row=1, col=1)
-
-                fig.add_trace(go.Scatter(
-                    x=impact_data.index, 
-                    y=impact_data[lower_col],
-                    mode='lines', 
-                    line=dict(width=0), 
-                    fill='tonexty',
-                    fillcolor='rgba(255, 165, 0, 0.2)', 
-                    name='95% CI'
-                ), row=1, col=1)
+            ci_inferences = getattr(st.session_state.ci, 'inferences', None)
+            if ci_inferences is None or not isinstance(ci_inferences, pd.DataFrame) or ci_inferences.empty:
+                st.warning("Model inferences are unavailable for this run, so the detailed plot and CSV export cannot be generated.")
+                st.info("Try a longer pre-event window and avoid sparse or highly volatile data.")
             else:
-                st.warning("Confidence interval columns not found")
+                impact_data = ci_inferences.copy()
+                impact_data.index = st.session_state.analysis_df.index
+                st.session_state.impact_data = impact_data
 
-            # Plot 2: Pointwise Effect
-            pointwise_effect = impact_data[actual_col] - impact_data[pred_col]
-            fig.add_trace(go.Scatter(
-                x=impact_data.index, 
-                y=pointwise_effect,
-                mode='lines', 
-                name='Pointwise Effect', 
-                line=dict(color='green')
-            ), row=2, col=1)
+                # DEBUG: Let's see the actual data structure
+                st.write("Actual columns in inferences data:", impact_data.columns.tolist())
+            
+                # AUTOMATICALLY DETECT THE CORRECT COLUMN NAMES
+                actual_col = None
+                pred_col = None
+                upper_col = None
+                lower_col = None
+            
+                # Look for columns that likely contain the actual data
+                for col in impact_data.columns:
+                    col_lower = str(col).lower()
+                    # Look for actual data columns
+                    if 'actual' in col_lower or 'response' in col_lower or 'y' in col_lower or 'observed' in col_lower:
+                        actual_col = col
+                    # Look for prediction columns
+                    elif 'pred' in col_lower and 'upper' not in col_lower and 'lower' not in col_lower:
+                        pred_col = col
+                    # Look for confidence interval columns
+                    elif 'upper' in col_lower:
+                        upper_col = col
+                    elif 'lower' in col_lower:
+                        lower_col = col
+            
+                # If we couldn't find specific names, use the first columns
+                if actual_col is None and len(impact_data.columns) > 0:
+                    actual_col = impact_data.columns[0]
+                if pred_col is None and len(impact_data.columns) > 1:
+                    pred_col = impact_data.columns[1]
+                if upper_col is None and len(impact_data.columns) > 2:
+                    upper_col = impact_data.columns[2]
+                if lower_col is None and len(impact_data.columns) > 3:
+                    lower_col = impact_data.columns[3]
 
-            # Add the event line to both subplots
-            for row in [1, 2]:
-                fig.add_shape(
-                    type="line",
-                    x0=st.session_state.event_date,
-                    y0=0,
-                    x1=st.session_state.event_date,
-                    y1=1,
-                    xref="x",
-                    yref="paper",
-                    row=row,
-                    col=1,
-                    line=dict(color="red", width=2, dash="dash")
-                )
+                st.write(f"Detected columns: actual={actual_col}, predicted={pred_col}, upper={upper_col}, lower={lower_col}")
 
-            fig.update_layout(
-                height=700,
-                title_text="Causal Impact Analysis",
-                hovermode='x unified',
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-            )
-            fig.update_yaxes(title_text=metric_col, row=1, col=1)
-            fig.update_yaxes(title_text="Effect Size", row=2, col=1)
-            fig.update_xaxes(title_text="Date", row=2, col=1)
+                if actual_col is None or pred_col is None:
+                    st.warning("Required actual/predicted columns were not found in inferences. Skipping detailed plot.")
+                else:
+                    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.05,
+                                    subplot_titles=('Actual vs. Predicted', 'Pointwise Effect'))
 
-            st.plotly_chart(fig, use_container_width=True)
+                    # Plot 1: Actual vs Predicted
+                    fig.add_trace(go.Scatter(
+                        x=impact_data.index, 
+                        y=impact_data[actual_col],
+                        mode='lines', 
+                        name='Actual', 
+                        line=dict(color='blue')
+                    ), row=1, col=1)
+
+                    fig.add_trace(go.Scatter(
+                        x=impact_data.index, 
+                        y=impact_data[pred_col],
+                        mode='lines', 
+                        name='Predicted', 
+                        line=dict(color='orange', dash='dash')
+                    ), row=1, col=1)
+
+                    # Add confidence interval if available
+                    if upper_col and lower_col and upper_col in impact_data.columns and lower_col in impact_data.columns:
+                        fig.add_trace(go.Scatter(
+                            x=impact_data.index, 
+                            y=impact_data[upper_col],
+                            mode='lines', 
+                            line=dict(width=0), 
+                            showlegend=False
+                        ), row=1, col=1)
+
+                        fig.add_trace(go.Scatter(
+                            x=impact_data.index, 
+                            y=impact_data[lower_col],
+                            mode='lines', 
+                            line=dict(width=0), 
+                            fill='tonexty',
+                            fillcolor='rgba(255, 165, 0, 0.2)', 
+                            name='95% CI'
+                        ), row=1, col=1)
+                    else:
+                        st.warning("Confidence interval columns not found")
+
+                    # Plot 2: Pointwise Effect
+                    pointwise_effect = impact_data[actual_col] - impact_data[pred_col]
+                    fig.add_trace(go.Scatter(
+                        x=impact_data.index, 
+                        y=pointwise_effect,
+                        mode='lines', 
+                        name='Pointwise Effect', 
+                        line=dict(color='green')
+                    ), row=2, col=1)
+
+                    # Add the event line to both subplots
+                    for row in [1, 2]:
+                        fig.add_shape(
+                            type="line",
+                            x0=st.session_state.event_date,
+                            y0=0,
+                            x1=st.session_state.event_date,
+                            y1=1,
+                            xref="x",
+                            yref="paper",
+                            row=row,
+                            col=1,
+                            line=dict(color="red", width=2, dash="dash")
+                        )
+
+                    fig.update_layout(
+                        height=700,
+                        title_text="Causal Impact Analysis",
+                        hovermode='x unified',
+                        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                    )
+                    fig.update_yaxes(title_text=metric_col, row=1, col=1)
+                    fig.update_yaxes(title_text="Effect Size", row=2, col=1)
+                    fig.update_xaxes(title_text="Date", row=2, col=1)
+
+                    st.plotly_chart(fig, use_container_width=True)
+                    st.session_state.impact_fig = fig
 
 with tab3:
     st.subheader("Export Results")
 
     if st.session_state.analysis_complete and st.session_state.ci is not None:
+        summary_for_download = st.session_state.summary_output
+        if summary_for_download is None:
+            try:
+                summary_for_download = st.session_state.ci.summary(output='report')
+            except Exception:
+                summary_for_download = "Summary report unavailable for this run."
+
         # Export Summary as Text
         st.download_button(
             label="📄 Download Summary Report",
-            data=st.session_state.ci.summary(output='report'),
+            data=summary_for_download,
             file_name="causal_impact_summary.txt",
             mime="text/plain",
             use_container_width=True
@@ -537,34 +561,39 @@ with tab3:
 
         # Export Chart as PNG
         # (Note: This requires kaleido - we'll add it to requirements if needed)
-        try:
-            img_bytes = fig.to_image(format="png", scale=2)
-            st.download_button(
-                label="🖼️ Download Chart as PNG",
-                data=img_bytes,
-                file_name="causal_impact_chart.png",
-                mime="image/png",
-                use_container_width=True
-            )
-        except:
-            st.info("Install `kaleido` to enable PNG chart downloads.")
+        if 'impact_fig' in st.session_state and st.session_state.impact_fig is not None:
+            try:
+                img_bytes = st.session_state.impact_fig.to_image(format="png", scale=2)
+                st.download_button(
+                    label="🖼️ Download Chart as PNG",
+                    data=img_bytes,
+                    file_name="causal_impact_chart.png",
+                    mime="image/png",
+                    use_container_width=True
+                )
+            except:
+                st.info("Install `kaleido` to enable PNG chart downloads.")
+        else:
+            st.info("No analysis figure is available to export for this run.")
 
         # Export Data as CSV
-        impact_data = st.session_state.ci.inferences.copy()
-        impact_data.index = st.session_state.analysis_df.index
-                # Try to get the actual data - handle different versions
-                # Add the actual data to export
-        try:
-            impact_data['actual'] = st.session_state.analysis_df[metric_col]
-        except:
-            st.warning("Could not add actual data to export")
-        csv = impact_data.to_csv()
-        st.download_button(
-            label="📊 Download Results Data (CSV)",
-            data=csv,
-            file_name="causal_impact_results.csv",
-            mime="text/csv",
-            use_container_width=True
-        )
+        export_data = st.session_state.impact_data
+        if export_data is not None and isinstance(export_data, pd.DataFrame) and not export_data.empty:
+            # Add observed metric for convenience when exporting.
+            try:
+                export_data = export_data.copy()
+                export_data['actual'] = st.session_state.analysis_df[metric_col]
+            except:
+                st.warning("Could not add actual data to export")
+            csv = export_data.to_csv()
+            st.download_button(
+                label="📊 Download Results Data (CSV)",
+                data=csv,
+                file_name="causal_impact_results.csv",
+                mime="text/csv",
+                use_container_width=True
+            )
+        else:
+            st.info("No inference table is available to export for this run.")
     else:
         st.info("Run an analysis first to enable export options.")
